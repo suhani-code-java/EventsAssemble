@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  # MongoDB Database
+  mongodb:
+    image: mongo:latest
+    container_name: echopod-mongodb
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_DATABASE: echopod
+    volumes:
+      - mongodb_data:/data/db
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/echopod --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - echopod-network
+
+  # Next.js Application
+  app:
+    build: .
+    container_name: echopod-app
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+      MONGODB_URI: mongodb://mongodb:27017/echopod
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - echopod-network
+    restart: unless-stopped
+
+volumes:
+  mongodb_data:
+    driver: local
+
+networks:
+  echopod-network:
+    driver: bridge

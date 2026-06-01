@@ -1,0 +1,49 @@
+version: '3.8'
+
+services:
+  # MongoDB Database
+  mongodb:
+    image: mongo:latest
+    container_name: echopod-mongodb-dev
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_DATABASE: echopod
+    volumes:
+      - mongodb_data_dev:/data/db
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/echopod --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - echopod-network-dev
+
+  # Next.js Application (Development Mode with Hot Reload)
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: echopod-app-dev
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: development
+      MONGODB_URI: mongodb://mongodb:27017/echopod
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    volumes:
+      - .:/app
+      - /app/node_modules
+    networks:
+      - echopod-network-dev
+    restart: unless-stopped
+
+volumes:
+  mongodb_data_dev:
+    driver: local
+
+networks:
+  echopod-network-dev:
+    driver: bridge
