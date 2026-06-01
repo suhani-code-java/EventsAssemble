@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Bell, CheckCircle, Calendar, Trophy, Info, Check } from 'lucide-react';
-import { mockNotifications } from '@/lib/mock-data';
+import type { MockNotification } from '@/lib/mock-data';
 
 const typeIcons = {
   event: Calendar,
@@ -20,11 +20,19 @@ const typeColors = {
 
 export default function NotificationsPage() {
   const [user, setUser] = useState<{ _id: string } | null>(null);
-  const [notifications, setNotifications] = useState(mockNotifications);
+  const [notifications, setNotifications] = useState<MockNotification[]>([]);
 
   useEffect(() => {
     const userData = localStorage.getItem('user');
-    if (userData) setUser(JSON.parse(userData));
+    if (userData) {
+      const parsedUser = JSON.parse(userData);
+      setUser(parsedUser);
+
+      fetch(`/api/notifications?userId=${parsedUser._id}`)
+        .then((response) => response.json())
+        .then((data) => setNotifications(data.notifications || []))
+        .catch(() => setNotifications([]));
+    }
   }, []);
 
   if (!user) return null;
@@ -37,10 +45,20 @@ export default function NotificationsPage() {
 
   const markAsRead = (id: string) => {
     setNotifications(prev => prev.map(n => n._id === id ? { ...n, read: true } : n));
+    fetch('/api/notifications', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: user._id, notificationId: id, read: true }),
+    }).catch(() => undefined);
   };
 
   const markAllRead = () => {
     setNotifications(prev => prev.map(n => n.userId === user._id ? { ...n, read: true } : n));
+    fetch('/api/notifications', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId: user._id, read: true }),
+    }).catch(() => undefined);
   };
 
   return (

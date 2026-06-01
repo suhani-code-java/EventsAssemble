@@ -2,8 +2,7 @@ import { NextResponse } from 'next/server';
 import connectDB from '@/lib/mongodb';
 import { EventModel, seedEventsIfEmpty } from '@/lib/event-model';
 import { RegistrationModel, seedRegistrationsIfEmpty } from '@/lib/registration-model';
-import { mockNotifications } from '@/lib/mock-data';
-import { addRuntimeRegistration, findRuntimeEventById } from '@/lib/runtime-store';
+import { addRuntimeNotification, addRuntimeRegistration, findRuntimeEventById } from '@/lib/runtime-store';
 
 export async function POST(
   request: Request,
@@ -45,14 +44,16 @@ export async function POST(
     await event.save();
 
     // Create notification
-    mockNotifications.push({
+    addRuntimeNotification({
       _id: `n${Date.now()}`,
       userId,
+      eventId: params.id,
       title: '🎉 Registration Confirmed',
       message: `You are registered for ${event.title}!`,
       type: 'event',
       read: false,
       createdAt: new Date().toISOString(),
+      source: 'registration',
     });
 
     return NextResponse.json({ registration }, { status: 201 });
@@ -75,14 +76,16 @@ export async function POST(
       addRuntimeRegistration(registration as any);
 
       // push notification for demo users
-      mockNotifications.push({
+      addRuntimeNotification({
         _id: `n${Date.now()}`,
         userId,
+        eventId: params.id,
         title: '🎉 Registration Confirmed',
         message: `You are registered for ${params.id}!`,
         type: 'event',
         read: false,
         createdAt: new Date().toISOString(),
+        source: 'registration',
       });
 
       // ensure event exists in runtime store and report

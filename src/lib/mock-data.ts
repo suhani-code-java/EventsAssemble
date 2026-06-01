@@ -50,11 +50,13 @@ export interface MockRegistration {
 export interface MockNotification {
   _id: string;
   userId: string;
+  eventId?: string;
   title: string;
   message: string;
   type: 'event' | 'reminder' | 'badge' | 'system';
   read: boolean;
   createdAt: string;
+  source?: 'registration' | 'organizer' | 'system';
 }
 
 // ---- SEED DATA ----
@@ -78,10 +80,10 @@ export const mockEvents: MockEvent[] = [];
 export const mockRegistrations: MockRegistration[] = [];
 
 export const mockNotifications: MockNotification[] = [
-  { _id: 'n1', userId: 'u1', title: '🎉 Registration Confirmed', message: 'You are registered for HackSphere 2026!', type: 'event', read: false, createdAt: '2026-04-08T10:30:00Z' },
-  { _id: 'n2', userId: 'u1', title: '⏰ Event Reminder', message: 'Web Dev Bootcamp starts in 4 days!', type: 'reminder', read: false, createdAt: '2026-04-11T08:00:00Z' },
-  { _id: 'n3', userId: 'u1', title: '🏆 New Badge Earned!', message: 'You earned the "Tech Enthusiast" badge!', type: 'badge', read: true, createdAt: '2026-04-07T15:00:00Z' },
-  { _id: 'n4', userId: 'u1', title: '📢 New Event Alert', message: 'Cloud Computing Masterclass is now open for registration', type: 'system', read: true, createdAt: '2026-04-06T12:00:00Z' },
+  { _id: 'n1', userId: 'u1', title: '🎉 Registration Confirmed', message: 'You are registered for HackSphere 2026!', type: 'event', read: false, createdAt: '2026-04-08T10:30:00Z', source: 'system' },
+  { _id: 'n2', userId: 'u1', title: '⏰ Event Reminder', message: 'Web Dev Bootcamp starts in 4 days!', type: 'reminder', read: false, createdAt: '2026-04-11T08:00:00Z', source: 'system' },
+  { _id: 'n3', userId: 'u1', title: '🏆 New Badge Earned!', message: 'You earned the "Tech Enthusiast" badge!', type: 'badge', read: true, createdAt: '2026-04-07T15:00:00Z', source: 'system' },
+  { _id: 'n4', userId: 'u1', title: '📢 New Event Alert', message: 'Cloud Computing Masterclass is now open for registration', type: 'system', read: true, createdAt: '2026-04-06T12:00:00Z', source: 'system' },
 ];
 
 export const mockBadges = [  { id: 'b5', name: 'Star Organizer', description: 'Organized 5+ events', icon: '🎯', pointsRequired: 800 },
