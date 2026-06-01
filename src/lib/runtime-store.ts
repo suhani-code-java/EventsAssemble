@@ -1,4 +1,4 @@
-import { mockEvents, mockRegistrations, mockUsers, type MockEvent, type MockRegistration, type MockUser } from './mock-data';
+import { mockEvents, mockNotifications, mockRegistrations, mockUsers, type MockEvent, type MockNotification, type MockRegistration, type MockUser } from './mock-data';
 
 // In-memory fallback store for runtime when MongoDB is unavailable.
 // Data is process-local and resets on server restart.
@@ -6,6 +6,7 @@ interface RuntimeStore {
   events: MockEvent[];
   registrations: MockRegistration[];
   users: MockUser[];
+  notifications: MockNotification[];
 }
 
 const globalRef = globalThis as typeof globalThis & { __echopodStore?: RuntimeStore };
@@ -24,11 +25,16 @@ function cloneRegistration(r: MockRegistration): MockRegistration {
   return { ...r };
 }
 
+function cloneNotification(notification: MockNotification): MockNotification {
+  return { ...notification };
+}
+
 function createInitialStore(): RuntimeStore {
   return {
     events: mockEvents.map(cloneEvent),
     registrations: mockRegistrations.map(cloneRegistration),
     users: mockUsers.map(u => ({ ...u })),
+    notifications: mockNotifications.map(cloneNotification),
   };
 }
 
@@ -110,6 +116,29 @@ export function addRuntimeRegistration(reg: MockRegistration): MockRegistration 
     }
   }
   return reg;
+}
+
+export function listRuntimeNotifications(filter?: { userId?: string; eventId?: string }): MockNotification[] {
+  const store = getRuntimeStore();
+  return store.notifications.filter((notification) => {
+    if (filter?.userId && notification.userId !== filter.userId) return false;
+    if (filter?.eventId && notification.eventId !== filter.eventId) return false;
+    return true;
+  });
+}
+
+export function addRuntimeNotification(notification: MockNotification): MockNotification {
+  const store = getRuntimeStore();
+  store.notifications.unshift({ ...notification });
+  return notification;
+}
+
+export function updateRuntimeNotification(notificationId: string, updates: Partial<MockNotification>): MockNotification | null {
+  const store = getRuntimeStore();
+  const idx = store.notifications.findIndex((notification) => notification._id === notificationId);
+  if (idx === -1) return null;
+  store.notifications[idx] = { ...store.notifications[idx], ...updates };
+  return store.notifications[idx];
 }
 
 /** Users (server runtime demo users) */

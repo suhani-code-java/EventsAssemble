@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Calendar, Trophy, QrCode, ArrowRight, TrendingUp, Clock, Star, Sparkles } from 'lucide-react';
-import { mockNotifications, mockUsers, type MockEvent } from '@/lib/mock-data';
+import { mockUsers, type MockEvent, type MockNotification } from '@/lib/mock-data';
 import type { RegistrationRecord } from '@/lib/registration-model';
 
 export default function StudentDashboard() {
@@ -11,6 +11,7 @@ export default function StudentDashboard() {
   const [greeting, setGreeting] = useState('');
   const [events, setEvents] = useState<MockEvent[]>([]);
   const [registrations, setRegistrations] = useState<RegistrationRecord[]>([]);
+  const [notifications, setNotifications] = useState<MockNotification[]>([]);
 
   useEffect(() => {
     const userData = localStorage.getItem('user');
@@ -22,14 +23,17 @@ export default function StudentDashboard() {
       Promise.all([
         fetch('/api/events').then(res => res.json()),
         fetch(`/api/registrations?userId=${parsed._id}`).then(res => res.json()),
+        fetch(`/api/notifications?userId=${parsed._id}`).then(res => res.json()),
       ])
-        .then(([eventsData, registrationsData]) => {
+        .then(([eventsData, registrationsData, notificationsData]) => {
           setEvents(eventsData.events || []);
           setRegistrations(registrationsData.registrations || []);
+          setNotifications(notificationsData.notifications || []);
         })
         .catch(() => {
           setEvents([]);
           setRegistrations([]);
+          setNotifications([]);
         });
     }
 
@@ -44,7 +48,7 @@ export default function StudentDashboard() {
   const userRegistrations = registrations.filter(r => r.userId === user._id);
   const registeredEvents = userRegistrations.map(r => events.find(e => e._id === r.eventId)).filter(Boolean);
   const upcomingEvents = registeredEvents.filter(e => e && new Date(e.date) > new Date());
-  const userNotifications = mockNotifications.filter(n => n.userId === user._id && !n.read);
+  const userNotifications = notifications.filter(n => n.userId === user._id && !n.read);
 
   // Recommended events (content-based by skills)
   const recommendedEvents = events
@@ -180,7 +184,7 @@ export default function StudentDashboard() {
               )}
             </div>
             <div className="space-y-2">
-              {mockNotifications
+              {notifications
                 .filter(n => n.userId === user._id)
                 .slice(0, 3)
                 .map(notification => (

@@ -11,25 +11,30 @@ const categories = ['All', 'Hackathon', 'Workshop', 'Bootcamp', 'Competition', '
 export default function LandingPage() {
   const [activeCategory, setActiveCategory] = useState('All');
   const [searchQuery, setSearchQuery] = useState('');
-  const [count, setCount] = useState(0);
   const [isVisible, setIsVisible] = useState(false);
+  const [stats, setStats] = useState({
+    totalRegistrations: 0,
+    activeEvents: 0,
+    attendanceRate: 0,
+  });
 
   useEffect(() => {
     setIsVisible(true);
-    const target = 697;
-    const duration = 2000;
-    const step = target / (duration / 16);
-    let current = 0;
-    const timer = setInterval(() => {
-      current += step;
-      if (current >= target) {
-        setCount(target);
-        clearInterval(timer);
-      } else {
-        setCount(Math.floor(current));
-      }
-    }, 16);
-    return () => clearInterval(timer);
+
+    Promise.all([
+      fetch('/api/dashboard').then((response) => response.json()),
+      fetch('/api/analytics').then((response) => response.json()),
+    ])
+      .then(([dashboardData, analyticsData]) => {
+        setStats({
+          totalRegistrations: dashboardData.totalRegistrations ?? 0,
+          activeEvents: dashboardData.activeEvents ?? 0,
+          attendanceRate: analyticsData.stats?.attendanceRate ?? 0,
+        });
+      })
+      .catch(() => {
+        setStats({ totalRegistrations: 0, activeEvents: 0, attendanceRate: 0 });
+      });
   }, []);
 
   const filteredEvents = mockEvents.filter(event => {
@@ -98,10 +103,10 @@ export default function LandingPage() {
           {/* Stats Bar */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8">
             {[
-              { label: 'Total Registrations', value: count + '+', icon: Users },
-              { label: 'Active Events', value: '6', icon: Calendar },
-              { label: 'Avg. Attendance Rate', value: '87%', icon: QrCode },
-              { label: 'Badges Awarded', value: '2.4K', icon: Trophy },
+              { label: 'Total Registrations', value: stats.totalRegistrations, icon: Users },
+              { label: 'Active Events', value: stats.activeEvents, icon: Calendar },
+              { label: 'Avg. Attendance Rate', value: `${stats.attendanceRate}%`, icon: QrCode },
+              { label: 'Badges Awarded', value: mockLeaderboard.reduce((total, member) => total + member.badges, 0), icon: Trophy },
             ].map((stat, i) => (
               <div key={i} className="glass-card p-5 flex items-center gap-4" style={{ animationDelay: `${i * 0.1}s` }}>
                 <div className="w-12 h-12 rounded-xl bg-cream-200 flex items-center justify-center">

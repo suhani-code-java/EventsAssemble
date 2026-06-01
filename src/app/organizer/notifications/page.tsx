@@ -7,26 +7,54 @@ import { mockEvents } from '@/lib/mock-data';
 
 export default function OrganizerNotificationsPage() {
   const [form, setForm] = useState({ title: '', message: '', targetEvent: 'all', type: 'system' });
+  const [isSending, setIsSending] = useState(false);
   const [sentNotifs, setSentNotifs] = useState([
     { id: 1, title: '⏰ Event Reminder', message: 'Web Dev Bootcamp starts in 4 days!', target: 'All Attendees', time: '2 hours ago', recipients: 118 },
     { id: 2, title: '📢 New Event Alert', message: 'Cloud Computing Masterclass is open!', target: 'All Users', time: '1 day ago', recipients: 342 },
   ]);
 
-  const handleSend = () => {
+  const handleSend = async () => {
     if (!form.title.trim() || !form.message.trim()) {
       toast.error('Please fill in title and message');
       return;
     }
-    setSentNotifs(prev => [{
-      id: Date.now(),
-      title: form.title,
-      message: form.message,
-      target: form.targetEvent === 'all' ? 'All Users' : mockEvents.find(e => e._id === form.targetEvent)?.title || 'Unknown',
-      time: 'Just now',
-      recipients: form.targetEvent === 'all' ? 342 : Math.floor(Math.random() * 200) + 50,
-    }, ...prev]);
-    setForm({ title: '', message: '', targetEvent: 'all', type: 'system' });
-    toast.success('Notification sent successfully! 🔔');
+
+    setIsSending(true);
+
+    try {
+      const response = await fetch('/api/notifications', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: form.title,
+          message: form.message,
+          type: form.type,
+          eventId: form.targetEvent === 'all' ? undefined : form.targetEvent,
+          source: 'organizer',
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => null);
+        throw new Error(error?.error || 'Failed to send notification');
+      }
+
+      const result = await response.json();
+      setSentNotifs(prev => [{
+        id: Date.now(),
+        title: form.title,
+        message: form.message,
+        target: form.targetEvent === 'all' ? 'All Registered Students' : mockEvents.find(e => e._id === form.targetEvent)?.title || 'Unknown',
+        time: 'Just now',
+        recipients: result.recipientCount || 0,
+      }, ...prev]);
+      setForm({ title: '', message: '', targetEvent: 'all', type: 'system' });
+      toast.success('Notification sent successfully! 🔔');
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to send notification');
+    } finally {
+      setIsSending(false);
+    }
   };
 
   return (
@@ -90,7 +118,7 @@ export default function OrganizerNotificationsPage() {
                 placeholder="Write your notification message..."
               />
             </div>
-            <button onClick={handleSend} className="btn-primary w-full flex items-center justify-center gap-2">
+            <button onClick={handleSend} disabled={isSending} className="btn-primary w-full flex items-center justify-center gap-2 disabled:opacity-70">
               <Bell className="w-4 h-4" /> Send Notification
             </button>
           </div>
