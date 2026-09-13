@@ -101,24 +101,7 @@ export default function LandingPage() {
           </div>
 
           {/* Stats Bar */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8">
-            {[
-              { label: 'Total Registrations', value: stats.totalRegistrations, icon: Users },
-              { label: 'Active Events', value: stats.activeEvents, icon: Calendar },
-              { label: 'Avg. Attendance Rate', value: `${stats.attendanceRate}%`, icon: QrCode },
-              { label: 'Badges Awarded', value: mockLeaderboard.reduce((total, member) => total + member.badges, 0), icon: Trophy },
-            ].map((stat, i) => (
-              <div key={i} className="glass-card p-5 flex items-center gap-4" style={{ animationDelay: `${i * 0.1}s` }}>
-                <div className="w-12 h-12 rounded-xl bg-cream-200 flex items-center justify-center">
-                  <stat.icon className="w-6 h-6 text-accent-red" />
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-charcoal-800 font-serif">{stat.value}</p>
-                  <p className="text-xs text-charcoal-400">{stat.label}</p>
-                </div>
-              </div>
-            ))}
-          </div>
+      
         </div>
       </section>
 
@@ -325,7 +308,7 @@ export default function LandingPage() {
 
       {/* CTA Section */}
       <section className="py-20 px-6">
-        <div className="max-w-4xl mx-auto text-center glass-card p-12 bg-gradient-to-br from-charcoal-800 to-charcoal-900 border-none">
+        <div className="max-w-7xl mx-auto text-center glass-card p-40 bg-gradient-to-br from-charcoal-800 to-charcoal-900 border-none">
           <h2 className="font-serif text-headline text-white mb-4">Ready to Get Started?</h2>
           <p className="text-charcoal-300 mb-8 max-w-md mx-auto">
             Join thousands of students and organizers on the smartest event platform.
@@ -334,9 +317,7 @@ export default function LandingPage() {
             <Link href="/login" className="btn-primary text-base">
               Sign Up Free
             </Link>
-            <Link href="/login" className="px-6 py-3 rounded-lg text-white border border-white/20 hover:bg-white/10 transition-all text-base font-medium">
-              View Demo
-            </Link>
+           
           </div>
         </div>
       </section>
