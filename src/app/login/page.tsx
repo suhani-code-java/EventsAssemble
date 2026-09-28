@@ -15,6 +15,8 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
+  const [rollNumber, setRollNumber] = useState('');
+
   const [role, setRole] = useState<'student' | 'organizer'>('student');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -33,7 +35,7 @@ export default function LoginPage() {
       const res = await fetch('/api/auth/signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, password, role }),
+        body: JSON.stringify({ name, email, password, role, rollNumber }),
       });
 
       const data = await res.json();
@@ -242,6 +244,26 @@ export default function LoginPage() {
                 />
               </div>
             )}
+            {mode === 'signup' && role === 'student' && (
+  <div>
+    <label
+      htmlFor="rollNo"
+      className="block text-sm font-medium text-charcoal-600 mb-1.5"
+    >
+      Roll Number
+    </label>
+
+    <input
+      id="rollNo"
+      type="text"
+      value={rollNumber}
+      onChange={e => setRollNumber(e.target.value)}
+      className="input-elegant"
+      placeholder="Enter your roll number"
+      required
+    />
+  </div>
+)}
 
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-charcoal-600 mb-1.5">Email Address</label>

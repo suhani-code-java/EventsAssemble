@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { mockUsers } from '@/lib/mock-data';
 import { addRuntimeUser } from '@/lib/runtime-store';
 import { signToken } from '@/lib/auth';
+import connectDB from '@/lib/mongodb';
+import { UserModel } from '@/lib/user-model';
 
 export async function POST(request: Request) {
   try {
@@ -10,11 +12,6 @@ export async function POST(request: Request) {
 
     if (!email || !password || !name) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
-    }
-
-    const exists = mockUsers.find(u => u.email === email);
-    if (exists) {
-      return NextResponse.json({ error: 'Email already registered' }, { status: 400 });
     }
 
     const newUser = {
@@ -30,26 +27,34 @@ export async function POST(request: Request) {
       rollNumber: role === 'student' ? (rollNumber || `RTU${Date.now().toString().slice(-6)}`) : undefined,
     } as any;
 
-    // store in runtime store so routes can find the user across requests
+    let storedUser = newUser;
     try {
-      addRuntimeUser(newUser as any);
+      await connectDB();
+      const exists = await UserModel.findOne({ email });
+      if (exists) {
+        return NextResponse.json({ error: 'Email already registered' }, { status: 400 });
+      }
+      storedUser = (await UserModel.create(newUser)).toObject();
     } catch {
-      // fallback to pushing into mockUsers for older runtimes
-      mockUsers.push(newUser as any);
+      const exists = mockUsers.find(u => u.email === email);
+      if (exists) {
+        return NextResponse.json({ error: 'Email already registered' }, { status: 400 });
+      }
+      addRuntimeUser(newUser as any);
     }
 
-    const token = signToken({ userId: newUser._id, email: newUser.email, role: newUser.role });
+    const token = signToken({ userId: storedUser._id, email: storedUser.email, role: storedUser.role });
 
     const response = NextResponse.json({ user: {
-      _id: newUser._id,
-      name: newUser.name,
-      email: newUser.email,
-      role: newUser.role,
-      skills: newUser.skills,
-      interests: newUser.interests,
-      points: newUser.points,
-      badges: newUser.badges,
-      rollNumber: newUser.rollNumber,
+      _id: storedUser._id,
+      name: storedUser.name,
+      email: storedUser.email,
+      role: storedUser.role,
+      skills: storedUser.skills,
+      interests: storedUser.interests,
+      points: storedUser.points,
+      badges: storedUser.badges,
+      rollNumber: storedUser.rollNumber,
     }, token }, { status: 201 });
 
     response.cookies.set('token', token, {

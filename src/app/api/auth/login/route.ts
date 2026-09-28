@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 import { signToken } from '@/lib/auth';
+import connectDB from '@/lib/mongodb';
+import { UserModel } from '@/lib/user-model';
 
 export async function POST(request: Request) {
   try {
@@ -10,10 +12,18 @@ export async function POST(request: Request) {
     const mod = await import('@/lib/mock-data');
     const mockUsers = (mod && (mod as any).mockUsers) || [];
 
+    let databaseUser = null;
+    try {
+      await connectDB();
+      databaseUser = await UserModel.findOne({ email, password }).lean();
+    } catch {
+      // Use the local stores when MongoDB is unavailable.
+    }
+
     const runtimeUser = findRuntimeUserByEmail(email);
-    const user = (runtimeUser && runtimeUser.password === password)
+    const user = databaseUser || ((runtimeUser && runtimeUser.password === password)
       ? runtimeUser
-      : mockUsers.find((u: any) => u.email === email && u.password === password);
+      : mockUsers.find((u: any) => u.email === email && u.password === password));
 
     if (!user) {
       return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
